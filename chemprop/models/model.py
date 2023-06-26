@@ -20,11 +20,11 @@ class MoleculeModel(nn.Module):
         """
         :param args: A :class:`~chemprop.args.TrainArgs` object containing model arguments.
         """
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         super(MoleculeModel, self).__init__()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.seq_tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
         self.seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D").to(device)
-        print("Loaded ESM model: ", next(self.seq_model.parameters()).device)
+        
         self.classification = args.dataset_type == "classification"
         self.multiclass = args.dataset_type == "multiclass"
         self.loss_function = args.loss_function
@@ -280,6 +280,7 @@ class MoleculeModel(nn.Module):
             seq_numpy = seq_numpy.squeeze()
             seq_batch = seq_numpy.tolist()
             seq_inputs = self.seq_tokenizer(seq_batch, return_tensors="pt", padding=True, truncation=True)
+            print("Device ESM model: ", next(self.seq_model.parameters()).device)
             seq_outputs = self.seq_model(**seq_inputs)
             seq_last_hidden_states = seq_outputs.last_hidden_state
             seq_x = seq_last_hidden_states.detach()
