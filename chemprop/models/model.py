@@ -20,9 +20,10 @@ class MoleculeModel(nn.Module):
         """
         :param args: A :class:`~chemprop.args.TrainArgs` object containing model arguments.
         """
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         super(MoleculeModel, self).__init__()
         self.seq_tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
-        self.seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D")
+        self.seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D").to(device)
         self.classification = args.dataset_type == "classification"
         self.multiclass = args.dataset_type == "multiclass"
         self.loss_function = args.loss_function
