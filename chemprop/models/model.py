@@ -275,12 +275,12 @@ class MoleculeModel(nn.Module):
         :return: The output of the :class:`MoleculeModel`, containing a list of property predictions.
         """
         # Encoding sequences
+        print("Device ESM model: ", next(self.seq_model.parameters()).device)
         if self.has_sequences:
             seq_numpy = np.array(seq_batch)
             seq_numpy = seq_numpy.squeeze()
             seq_batch = seq_numpy.tolist()
             seq_inputs = self.seq_tokenizer(seq_batch, return_tensors="pt", padding=True, truncation=True)
-            print("Device ESM model: ", next(self.seq_model.parameters()).device)
             seq_outputs = self.seq_model(**seq_inputs)
             seq_last_hidden_states = seq_outputs.last_hidden_state
             seq_x = seq_last_hidden_states.detach()
