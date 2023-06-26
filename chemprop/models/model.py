@@ -11,6 +11,7 @@ from chemprop.args import TrainArgs
 from chemprop.features import BatchMolGraph
 from chemprop.nn_utils import initialize_weights
 
+from transformers import EsmTokenizer, EsmModel
 
 class MoleculeModel(nn.Module):
     """A :class:`MoleculeModel` is a model which contains a message passing network following by feed-forward layers."""
@@ -20,10 +21,12 @@ class MoleculeModel(nn.Module):
         :param args: A :class:`~chemprop.args.TrainArgs` object containing model arguments.
         """
         super(MoleculeModel, self).__init__()
-
+        self.seq_tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
+        self.seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D")
         self.classification = args.dataset_type == "classification"
         self.multiclass = args.dataset_type == "multiclass"
         self.loss_function = args.loss_function
+        self.has_sequences = args.sequence_columns is not None
 
         if hasattr(args, "train_class_sizes"):
             self.train_class_sizes = args.train_class_sizes
@@ -120,10 +123,14 @@ class MoleculeModel(nn.Module):
         else:
             bond_first_linear_dim = first_linear_dim
 
+        atom_seq_first_linear_dim = first_linear_dim
+        if self.has_sequences:
+            atom_seq_first_linear_dim += 320 # 320 is the size of the ESM embedding
+
         # Create FFN layers
         if self.is_atom_bond_targets:
             self.readout = MultiReadout(
-                atom_features_size=atom_first_linear_dim,
+                atom_features_size=atom_seq_first_linear_dim,
                 bond_features_size=bond_first_linear_dim,
                 atom_hidden_size=args.ffn_hidden_size + args.atom_descriptors_size,
                 bond_hidden_size=args.ffn_hidden_size + args.bond_descriptors_size,
@@ -138,7 +145,7 @@ class MoleculeModel(nn.Module):
             )
         else:
             self.readout = build_ffn(
-                first_linear_dim=atom_first_linear_dim,
+                first_linear_dim=atom_seq_first_linear_dim,
                 hidden_size=args.ffn_hidden_size + args.atom_descriptors_size,
                 num_layers=args.ffn_num_layers,
                 output_size=self.relative_output_size * args.num_tasks,
@@ -247,6 +254,7 @@ class MoleculeModel(nn.Module):
         bond_features_batch: List[np.ndarray] = None,
         constraints_batch: List[torch.Tensor] = None,
         bond_types_batch: List[torch.Tensor] = None,
+        seq_batch: List[str] = None,
     ) -> torch.Tensor:
         """
         Runs the :class:`MoleculeModel` on input.
@@ -264,6 +272,17 @@ class MoleculeModel(nn.Module):
         :param bond_types_batch: A list of PyTorch tensors storing bond types of each bond determined by RDKit molecules.
         :return: The output of the :class:`MoleculeModel`, containing a list of property predictions.
         """
+        # Encoding sequences
+        if self.has_sequences:
+            seq_numpy = np.array(seq_batch)
+            seq_numpy = seq_numpy.squeeze()
+            seq_batch = seq_numpy.tolist()
+            seq_inputs = self.seq_tokenizer(seq_batch, return_tensors="pt", padding=True, truncation=True)
+            seq_outputs = self.seq_model(**seq_inputs)
+            seq_last_hidden_states = seq_outputs.last_hidden_state
+            seq_x = seq_last_hidden_states.detach()
+            seq_x = seq_x.mean(axis=1)
+
         if self.is_atom_bond_targets:
             encodings = self.encoder(
                 batch,
@@ -273,7 +292,11 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            output = self.readout(encodings, constraints_batch, bond_types_batch)
+            if self.has_sequences:
+                concat = torch.cat([encodings, seq_x], dim=1)
+            else:
+                concat = encodings
+            output = self.readout(concat, constraints_batch, bond_types_batch)
         else:
             encodings = self.encoder(
                 batch,
@@ -283,7 +306,11 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            output = self.readout(encodings)
+            if self.has_sequences:
+                concat = torch.cat([encodings, seq_x], dim=1)
+            else:
+                concat = encodings
+            output = self.readout(concat)
 
         # Don't apply sigmoid during training when using BCEWithLogitsLoss
         if (

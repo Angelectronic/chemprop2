@@ -58,6 +58,7 @@ def run_training(args: TrainArgs,
                              phase_features_path=args.separate_test_phase_features_path,
                              constraints_path=args.separate_test_constraints_path,
                              smiles_columns=args.smiles_columns,
+                             sequence_columns=args.sequence_columns,
                              loss_function=args.loss_function,
                              logger=logger)
     if args.separate_val_path:
@@ -69,6 +70,7 @@ def run_training(args: TrainArgs,
                             phase_features_path=args.separate_val_phase_features_path,
                             constraints_path=args.separate_val_constraints_path,
                             smiles_columns=args.smiles_columns,
+                            sequence_columns=args.sequence_columns,
                             loss_function=args.loss_function,
                             logger=logger)
 

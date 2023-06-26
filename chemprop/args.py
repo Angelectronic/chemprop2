@@ -68,6 +68,8 @@ class CommonArgs(Tap):
     smiles_columns: List[str] = None
     """List of names of the columns containing SMILES strings.
     By default, uses the first :code:`number_of_molecules` columns."""
+    sequence_columns: List[str] = None
+    """List of names of the columns containing protein sequences."""
     number_of_molecules: int = 1
     """Number of molecules in each input to the model.
     This must equal the length of :code:`smiles_columns` (if not :code:`None`)."""

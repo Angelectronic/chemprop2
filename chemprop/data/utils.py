@@ -343,6 +343,7 @@ def get_invalid_smiles_from_list(smiles: List[List[str]], reaction: bool = False
 def get_data(path: str,
              smiles_columns: Union[str, List[str]] = None,
              target_columns: List[str] = None,
+             sequence_columns: List[str] = None,
              ignore_columns: List[str] = None,
              skip_invalid_smiles: bool = True,
              args: Union[TrainArgs, PredictArgs] = None,
@@ -366,6 +367,7 @@ def get_data(path: str,
                            By default, uses the first :code:`number_of_molecules` columns.
     :param target_columns: Name of the columns containing target values. By default, uses all columns
                            except the :code:`smiles_column` and the :code:`ignore_columns`.
+    :param sequence_columns: Name of the columns containing sequence values. By default, uses no columns.
     :param ignore_columns: Name of the columns to ignore when :code:`target_columns` is not provided.
     :param skip_invalid_smiles: Whether to skip and filter out invalid smiles using :func:`filter_invalid_smiles`.
     :param args: Arguments, either :class:`~chemprop.args.TrainArgs` or :class:`~chemprop.args.PredictArgs`.
@@ -393,6 +395,7 @@ def get_data(path: str,
         # Prefer explicit function arguments but default to args if not provided
         smiles_columns = smiles_columns if smiles_columns is not None else args.smiles_columns
         target_columns = target_columns if target_columns is not None else args.target_columns
+        sequence_columns = sequence_columns if sequence_columns is not None else args.sequence_columns
         ignore_columns = ignore_columns if ignore_columns is not None else args.ignore_columns
         features_path = features_path if features_path is not None else args.features_path
         features_generator = features_generator if features_generator is not None else args.features_generator
@@ -472,10 +475,10 @@ def get_data(path: str,
         if any([c not in fieldnames for c in target_columns]):
             raise ValueError(f'Data file did not contain all provided target columns: {target_columns}. Data file field names are: {fieldnames}')
 
-        all_smiles, all_targets, all_atom_targets, all_bond_targets, all_rows, all_features, all_phase_features, all_constraints_data, all_raw_constraints_data, all_weights, all_gt, all_lt = [], [], [], [], [], [], [], [], [], [], [], []
+        all_smiles, all_sequences, all_targets, all_atom_targets, all_bond_targets, all_rows, all_features, all_phase_features, all_constraints_data, all_raw_constraints_data, all_weights, all_gt, all_lt = [], [], [], [], [], [], [], [], [], [], [], [], []
         for i, row in enumerate(tqdm(reader)):
             smiles = [row[c] for c in smiles_columns]
-
+            sequence = [row[c] for c in sequence_columns] if sequence_columns is not None else None
             targets, atom_targets, bond_targets = [], [], []
             for column in target_columns:
                 value = row[column]
@@ -510,7 +513,7 @@ def get_data(path: str,
             # Check whether all targets are None and skip if so
             if skip_none_targets and all(x is None for x in targets):
                 continue
-
+            all_sequences.append(sequence)
             all_smiles.append(smiles)
             all_targets.append(targets)
             all_atom_targets.append(atom_targets)
@@ -573,6 +576,7 @@ def get_data(path: str,
             MoleculeDatapoint(
                 smiles=smiles,
                 targets=targets,
+                sequences=sequence,
                 atom_targets=all_atom_targets[i] if atom_targets else None,
                 bond_targets=all_bond_targets[i] if bond_targets else None,
                 row=all_rows[i] if store_row else None,
@@ -590,7 +594,7 @@ def get_data(path: str,
                 raw_constraints=all_raw_constraints_data[i] if raw_constraints_data is not None else None,
                 overwrite_default_atom_features=args.overwrite_default_atom_features if args is not None else False,
                 overwrite_default_bond_features=args.overwrite_default_bond_features if args is not None else False
-            ) for i, (smiles, targets) in tqdm(enumerate(zip(all_smiles, all_targets)),
+            ) for i, (smiles, targets, sequence) in tqdm(enumerate(zip(all_smiles, all_targets, all_sequences)),
                                             total=len(all_smiles))
         ])
 

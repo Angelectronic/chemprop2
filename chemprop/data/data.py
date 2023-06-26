@@ -57,6 +57,7 @@ class MoleculeDatapoint:
     def __init__(self,
                  smiles: List[str],
                  targets: List[Optional[float]] = None,
+                 sequences: List[str] = None,
                  atom_targets: List[Optional[float]] = None,
                  bond_targets: List[Optional[float]] = None,
                  row: OrderedDict = None,
@@ -96,6 +97,7 @@ class MoleculeDatapoint:
         """
         self.smiles = smiles
         self.targets = targets
+        self.sequences = sequences
         self.atom_targets = atom_targets
         self.bond_targets = bond_targets
         self.row = row
@@ -426,6 +428,14 @@ class MoleculeDataset(Dataset):
             return None
 
         return [d.features for d in self._data]
+    
+    def sequences(self) -> List[str]:
+        """
+        Returns the sequences associated with each molecule (if they exist).
+        """
+        if len(self._data) == 0 or self._data[0].sequences is None:
+            return None
+        return [d.sequences for d in self._data]
 
     def phase_features(self) -> List[np.ndarray]:
         """
