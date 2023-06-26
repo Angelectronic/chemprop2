@@ -275,7 +275,6 @@ class MoleculeModel(nn.Module):
         :return: The output of the :class:`MoleculeModel`, containing a list of property predictions.
         """
         # Encoding sequences
-        print("Device ESM model: ", next(self.seq_model.parameters()).device)
         if self.has_sequences:
             seq_numpy = np.array(seq_batch)
             seq_numpy = seq_numpy.squeeze()

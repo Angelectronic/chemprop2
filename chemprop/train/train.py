@@ -126,6 +126,7 @@ def train(
 
         # Run model
         model.zero_grad()
+        print('mMODEL: ', next(model.parameters()).device)
         preds = model(
             mol_batch,
             features_batch,
