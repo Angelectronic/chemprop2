@@ -24,6 +24,7 @@ class MoleculeModel(nn.Module):
         super(MoleculeModel, self).__init__()
         self.seq_tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
         self.seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D").to(device)
+        print("Loaded ESM model: ", next(self.seq_model.parameters()).device)
         self.classification = args.dataset_type == "classification"
         self.multiclass = args.dataset_type == "multiclass"
         self.loss_function = args.loss_function
