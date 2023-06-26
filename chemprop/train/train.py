@@ -57,7 +57,7 @@ def train(
             batch.batch_graph(), batch.features(), batch.targets(), batch.mask(), batch.atom_descriptors(), \
             batch.atom_features(), batch.bond_descriptors(), batch.bond_features(), batch.constraints(), batch.data_weights()
         seq_batch = batch.sequences()
-
+        
         if model.is_atom_bond_targets:
             targets = []
             for dt in zip(*target_batch):

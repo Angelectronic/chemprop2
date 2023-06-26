@@ -21,10 +21,6 @@ class MoleculeModel(nn.Module):
         :param args: A :class:`~chemprop.args.TrainArgs` object containing model arguments.
         """
         super(MoleculeModel, self).__init__()
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.seq_tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
-        self.seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D").to(device)
-        
         self.classification = args.dataset_type == "classification"
         self.multiclass = args.dataset_type == "multiclass"
         self.loss_function = args.loss_function
@@ -275,16 +271,8 @@ class MoleculeModel(nn.Module):
         :return: The output of the :class:`MoleculeModel`, containing a list of property predictions.
         """
         # Encoding sequences
-        if self.has_sequences:
-            seq_numpy = np.array(seq_batch)
-            seq_numpy = seq_numpy.squeeze()
-            seq_batch = seq_numpy.tolist()
-            seq_inputs = self.seq_tokenizer(seq_batch, return_tensors="pt", padding=True, truncation=True)
-            seq_outputs = self.seq_model(**seq_inputs)
-            print("DEVICE: ", seq_outputs.last_hidden_state.device)
-            seq_last_hidden_states = seq_outputs.last_hidden_state
-            seq_x = seq_last_hidden_states.detach()
-            seq_x = seq_x.mean(axis=1)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        seq_x = torch.Tensor(seq_batch).to(device)
 
         if self.is_atom_bond_targets:
             encodings = self.encoder(

@@ -19,6 +19,8 @@ from .scaffold import log_scaffold_stats, scaffold_split
 from chemprop.args import PredictArgs, TrainArgs
 from chemprop.features import load_features, load_valid_atom_or_bond_features, is_mol
 from chemprop.rdkit import make_mol
+from transformers import EsmTokenizer, EsmModel
+import numpy as np
 
 # Increase maximum size of field in the csv processing for the current architecture
 csv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
@@ -571,6 +573,24 @@ def get_data(path: str,
                 bond_features = descriptors
             elif args.bond_descriptors == 'descriptor':
                 bond_descriptors = descriptors
+        
+        # sequence encoding        
+        seq_tokenizer = EsmTokenizer.from_pretrained("facebook/esm2_t6_8M_UR50D")
+        seq_model = EsmModel.from_pretrained("facebook/esm2_t6_8M_UR50D")
+        seq_numpy = np.array(all_sequences)
+        seq_numpy = seq_numpy.squeeze()
+        seq_batch = seq_numpy.tolist()
+        
+        all_seq_encodings = []
+        for i in tqdm(range(len(seq_batch))):
+            seq_inputs = seq_tokenizer(seq_batch[i], return_tensors="pt", padding=True, truncation=True)
+            seq_outputs = seq_model(**seq_inputs)
+            seq_last_hidden_states = seq_outputs.last_hidden_state
+            seq_x = seq_last_hidden_states.detach()
+            seq_x = seq_x.mean(axis=1)
+            seq_x = seq_x.squeeze()
+            seq_x = seq_x.numpy()
+            all_seq_encodings.append(seq_x)
 
         data = MoleculeDataset([
             MoleculeDatapoint(
@@ -594,7 +614,7 @@ def get_data(path: str,
                 raw_constraints=all_raw_constraints_data[i] if raw_constraints_data is not None else None,
                 overwrite_default_atom_features=args.overwrite_default_atom_features if args is not None else False,
                 overwrite_default_bond_features=args.overwrite_default_bond_features if args is not None else False
-            ) for i, (smiles, targets, sequence) in tqdm(enumerate(zip(all_smiles, all_targets, all_sequences)),
+            ) for i, (smiles, targets, sequence) in tqdm(enumerate(zip(all_smiles, all_targets, all_seq_encodings)),
                                             total=len(all_smiles))
         ])
 
