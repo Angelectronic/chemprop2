@@ -281,6 +281,7 @@ class MoleculeModel(nn.Module):
             seq_batch = seq_numpy.tolist()
             seq_inputs = self.seq_tokenizer(seq_batch, return_tensors="pt", padding=True, truncation=True)
             seq_outputs = self.seq_model(**seq_inputs)
+            print("DEVICE: ", seq_outputs.last_hidden_state.device)
             seq_last_hidden_states = seq_outputs.last_hidden_state
             seq_x = seq_last_hidden_states.detach()
             seq_x = seq_x.mean(axis=1)
