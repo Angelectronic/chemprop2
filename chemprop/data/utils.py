@@ -582,7 +582,12 @@ def get_data(path: str,
         seq_batch = seq_numpy.tolist()
         
         all_seq_encodings = []
+        already_encoded = []
         for i in tqdm(range(len(seq_batch))):
+            if seq_batch[i] in already_encoded:
+                all_seq_encodings.append(all_seq_encodings[already_encoded.index(seq_batch[i])])
+                continue
+            
             seq_inputs = seq_tokenizer(seq_batch[i], return_tensors="pt", padding=True, truncation=True)
             seq_outputs = seq_model(**seq_inputs)
             seq_last_hidden_states = seq_outputs.last_hidden_state
@@ -591,6 +596,7 @@ def get_data(path: str,
             seq_x = seq_x.squeeze()
             seq_x = seq_x.numpy()
             all_seq_encodings.append(seq_x)
+            already_encoded.append(seq_batch[i])
 
         data = MoleculeDataset([
             MoleculeDatapoint(
