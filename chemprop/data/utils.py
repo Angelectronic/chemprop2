@@ -600,10 +600,11 @@ def get_data(path: str,
 
         # scaled to 0 to 1
         all_seq_encodings = np.array(all_seq_encodings)
-        min_val = -3.1801
-        max_val = 0.6185
+        min_val = -3.3070796
+        max_val = 0.77715
         print("MIN: ", all_seq_encodings.min()," MAX: ", all_seq_encodings.max())
         all_seq_encodings = (all_seq_encodings - min_val) / (max_val - min_val)  
+        print("MIN: ", all_seq_encodings.min()," MAX: ", all_seq_encodings.max())
 
         data = MoleculeDataset([
             MoleculeDatapoint(
