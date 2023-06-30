@@ -275,6 +275,7 @@ class MoleculeModel(nn.Module):
         seq_batch = np.array(seq_batch)
         seq_x = torch.Tensor(seq_batch).to(device)
 
+        max_encoding = 0
         if self.is_atom_bond_targets:
             encodings = self.encoder(
                 batch,
@@ -284,7 +285,10 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            print("MAX: ", torch.max(encodings)," MIN: ", torch.min(encodings))
+            if torch.max(encodings) > max_encoding:
+                max_encoding = torch.max(encodings)
+            print("max encoding: ", max_encoding)
+
             if self.has_sequences:
                 concat = torch.cat([encodings, seq_x], dim=1)
             else:
@@ -299,7 +303,9 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            print("MAX: ", torch.max(encodings)," MIN: ", torch.min(encodings))
+            if torch.max(encodings) > max_encoding:
+                max_encoding = torch.max(encodings)
+            print("max encoding: ", max_encoding)
             if self.has_sequences:
                 concat = torch.cat([encodings, seq_x], dim=1)
             else:
