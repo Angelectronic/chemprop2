@@ -272,6 +272,7 @@ class MoleculeModel(nn.Module):
         """
         # Encoding sequences
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        seq_batch = np.array(seq_batch)
         seq_x = torch.Tensor(seq_batch).to(device)
 
         if self.is_atom_bond_targets:
