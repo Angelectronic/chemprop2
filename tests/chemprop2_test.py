@@ -18,6 +18,8 @@ if __name__ == '__main__':
         '--loss_function', 'mse',
         '--dropout', '0.2',
         '--sequence_columns', 'Target_Seq',
+        '--hidden_size', '800',
+        '--depth', '32',
     ]
 
     args = TrainArgs().parse_args(arguments)

@@ -598,12 +598,12 @@ def get_data(path: str,
             all_seq_encodings.append(seq_x)
             already_encoded.append(seq_batch[i])
 
-        # scaled to 0 to 1
+        # scaled to 0 to 2
         all_seq_encodings = np.array(all_seq_encodings)
         min_val = -3.3070796
         max_val = 0.77715
         print("MIN: ", all_seq_encodings.min()," MAX: ", all_seq_encodings.max())
-        all_seq_encodings = (all_seq_encodings - min_val) / (max_val - min_val)  
+        all_seq_encodings = (all_seq_encodings - min_val) * (2 / (max_val - min_val))
         print("MIN: ", all_seq_encodings.min()," MAX: ", all_seq_encodings.max())
 
         data = MoleculeDataset([
