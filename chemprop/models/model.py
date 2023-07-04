@@ -284,7 +284,7 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            print("MAX: ", torch.max(encodings))
+            print(encodings.tolist())
             if self.has_sequences:
                 concat = torch.cat([encodings, seq_x], dim=1)
             else:
@@ -299,7 +299,7 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            print("MAX: ", torch.max(encodings))
+            print(encodings.tolist())
             if self.has_sequences:
                 concat = torch.cat([encodings, seq_x], dim=1)
             else:
