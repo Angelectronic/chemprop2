@@ -603,7 +603,7 @@ def get_data(path: str,
         min_val = -3.3070796
         max_val = 0.77715
         all_seq_encodings = (all_seq_encodings - min_val) * (2 / (max_val - min_val))
-        print(all_seq_encodings.tolist())
+        print(all_seq_encodings[0][np.random.randint(0, len(all_seq_encodings[0]), 5)].tolist())
 
         data = MoleculeDataset([
             MoleculeDatapoint(
