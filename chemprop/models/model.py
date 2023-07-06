@@ -284,9 +284,16 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            print(encodings[0][np.random.randint(0, len(encodings[0]), 5)].tolist())
             if self.has_sequences:
-                concat = torch.cat([encodings, seq_x], dim=1)
+                new_encodings = []
+                for i in range(len(encodings)):
+                    new_encoding = 2*(encodings[i] - encodings[i].min()) / (encodings[i].max() - encodings[i].min()) - 1
+                    new_encodings.append(new_encoding)
+                new_encodings = torch.stack(new_encodings)
+
+                for i in range(len(seq_x)):
+                    seq_x[i] = 2*(seq_x[i] - seq_x[i].min()) / (seq_x[i].max() - seq_x[i].min()) - 1
+                concat = torch.cat([new_encodings, seq_x], dim=1)
             else:
                 concat = encodings
             output = self.readout(concat, constraints_batch, bond_types_batch)
@@ -299,9 +306,16 @@ class MoleculeModel(nn.Module):
                 bond_descriptors_batch,
                 bond_features_batch,
             )
-            print(encodings[0][np.random.randint(0, len(encodings[0]), 5)].tolist())
             if self.has_sequences:
-                concat = torch.cat([encodings, seq_x], dim=1)
+                new_encodings = []
+                for i in range(len(encodings)):
+                    new_encoding = 2*(encodings[i] - encodings[i].min()) / (encodings[i].max() - encodings[i].min()) - 1
+                    new_encodings.append(new_encoding)
+                new_encodings = torch.stack(new_encodings)
+
+                for i in range(len(seq_x)):
+                    seq_x[i] = 2*(seq_x[i] - seq_x[i].min()) / (seq_x[i].max() - seq_x[i].min()) - 1
+                concat = torch.cat([new_encodings, seq_x], dim=1)
             else:
                 concat = encodings
             output = self.readout(concat)
